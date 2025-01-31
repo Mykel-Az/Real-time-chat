@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,8 +43,7 @@ INSTALLED_APPS = [
     'allauth.account', # d-a
     'allauth.socialaccount', # social auth
     'allauth.socialaccount.providers.google', # google auth
-
-
+    'channels', # dj-ch
     # my apps
     'main',
 ]
@@ -98,8 +98,10 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'core.wsgi.application'
 
+ASGI_APPLICATION = 'core.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
