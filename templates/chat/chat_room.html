@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<wrapper class="block max-w-2xl mx-auto my-10 px-6">
+    {% if chat_group.groupchat_name %}
+    <h2>{{ chat_group.groupchat_name }}</h2>
+    {% endif %}
+    <div id="chat_window" class="h-[45rem] flex flex-col bg-gray-800 rounded-2xl shadow-2xl relative p-1">
+        <div class="flex justify-center text-white bg-gray-800 p-2 sticky top-0 z-10">
+            {% if other_user %}
+            <div id="online-icon" class="gray-dot absolute top-2 left-2"></div>
+            <a href="{{ other_user.userprofile.get_absolute_url }}">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="mb-4">
+                        <!-- Replace 'userprofile.display_picture.url' with actual image path -->
+                        {% if other_user.userprofile.display_picture %}
+                        <img
+                          src="{{ other_user.userprofile.display_picture.url }}"
+                          alt="Profile Picture" 
+                          class="rounded-circle shadow-sm" 
+                          style="width: 50px; height: 50px; object-fit: cover;">
+                        
+                        {% else %}
+                        <img
+                          src="{% static 'img/default_profile.jpg' %}"
+                          alt="Profile Picture" 
+                          class="rounded-circle shadow-sm" 
+                          style="width: 120px; height: 120px; object-fit: cover;">                        
+                        {% endif %}                                
+                    </div>
+
+                    <div>
+                        <span class="m-0">{{ other_user.first_name }} {{ other_user.last_name }}</span> 
+                        <span class="text-sm font-light text-gray-400" >@{{ other_user.username }}</span>
+                    </div>  
+                </div>
+            </a>
+            {% elif chat_group.groupchat_name %}
+            <ul id="groupchat-members" class="flex gap-4">
+                {% for member in chat_group.members.all %}
+                <li>
+                    <a href="#">
+                        {{member.first_name}} {{member.last_name|slice:"10"}}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div id="online-icon"></div>
+            <span id="online-count" class="pr-1"></span>online
+            {% endif %}
+        </div>
+        <div id='chat_container' class="overflow-y-auto grow">
+            <ul id='chat_messages' class="flex flex-col justify-end gap-2 p-4">
+                {% for message in chat_messages %}
+                {% include 'chat_message.html' %}
+
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="sticky bottom-0 z-10 p-2 bg-gray-800">
+            <div class="flex items-center rounded-xl px-2 py-2">
+                <form id="chat_message_form" class="w-full"
+                    hx-ext="ws"
+                    ws-connect="/ws/chatroom/{{ chatroom_name }}"
+                    ws-send
+                    _="on htmx:wsAfterSend reset() me">
+                    {% csrf_token %}
+                    {{ form.body|as_crispy_field }}
+                </form>
+            </div>
+        </div>
+    </div>
+</wrapper>
+
+
+
+<h1>Chat Room: <span id="room-name">{{room_name}}</span></h1>
+<div id="Chat-log"></div>
+<input type="text" placeholder="Type yout message here..." id="chat-message-input">
+<input type="button" value="Send" id="chat-message-submit">
+
+
+<script>
+    // Get room name from the template
+    const roomName = document.getElementById('room-name').innerText;
+
+    // create a webSocket connection
+    const chatSocket = new WebSocket(
+        `ws://${window.location.host}/ws/chat/${roomName}/`
+    )
+
+    // Handle incoming messages
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data)
+        const chatLog = document.querySelector('#chat-log');
+
+        // create a new message element
+        const messageElement = document.createElement('div');
+        messageElement.innerText = data.message;
+
+        // Aooend the message to the chat log
+        charLog.appendChild(messageElement);
+
+        // Scroll to the bottom of the chat log
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+
+    // Handle websocket errors
+    chatSocket.onclose = function (e){
+        console.error('Chat socket closed unexpectedly');
+    }
+
+    // Send message when the send button is clicked
+    document.querySelector('#chat-message-submit').onclick =function(e){
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom;
+
+        // Send the message over the websocket
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }))
+
+        // clear the input field
+        messageInputDom.value = '';
+    };
+
+    // Send message when Enter key is pressed 
+    document.querySelector('#chat-message-input').onkeyup = function(e){
+        if (e.keyCode === 13) {
+            document.querySelector('chat-message-submit').click();
+        }
+    };
+</script>
+{% endblock %}

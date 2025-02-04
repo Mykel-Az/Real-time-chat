@@ -10,6 +10,7 @@ class GroupChatRoom(models.Model):
     admin = models.ForeignKey(User, related_name='groupchat_admin', on_delete=models.CASCADE, blank=True)
     users_online = models.ManyToManyField(User, related_name='online_in_groups', blank=True)
     members = models.ManyToManyField(User, related_name='groupchat_members', blank=True)
+    is_private = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.room_code}: {self.groupchat_name}'

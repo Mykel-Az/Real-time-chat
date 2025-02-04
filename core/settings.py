@@ -44,9 +44,22 @@ INSTALLED_APPS = [
     'allauth.socialaccount', # social auth
     'allauth.socialaccount.providers.google', # google auth
     'channels', # dj-ch
+    'tailwind',
+    'theme', #tw-config
+    'django_browser_reload',
+
     # my apps
     'main',
 ]
+
+TAILWIND_APP_NAME = 'theme'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"  #tw config
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware', #allauth
+    "django_browser_reload.middleware.BrowserReloadMiddleware", # tw browser reload
 ]
 
 # allauth configurations

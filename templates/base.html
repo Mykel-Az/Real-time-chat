@@ -1,12 +1,85 @@
+{% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real time chat</title>
+    {% tailwind_css %}
 </head>
 <body>
-    
+    <div class="min-h-screen flex">
+        <!-- Left Side Navbar -->
+        <div class="navbar bg-base-300 flex-col items-start h-full w-64 fixed left-0 top-0">
+          <!-- Logo/Brand -->
+          <div class="navbar-start w-full px-4 py-2">
+            <a class="btn btn-ghost text-xl">daisyUI</a>
+          </div>
+      
+          <!-- Navigation Links -->
+          <div class="navbar-center w-full">
+            <ul class="menu menu-vertical w-full p-2">
+              <li><a class="flex items-center gap-2">Homepage</a></li>
+              <li><a class="flex items-center gap-2">Portfolio</a></li>
+              <li><a class="flex items-center gap-2">About</a></li>
+              <li><a class="flex items-center gap-2" href="">Chats</a></li>
+            </ul>
+          </div>
+      
+          <!-- Bottom Section (Notifications, Profile, etc.) -->
+          <div class="navbar-end w-full flex-col items-start p-4 mt-auto">
+            <!-- Notifications -->
+            <button class="btn btn-ghost btn-circle">
+              <div class="indicator">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span class="badge badge-xs badge-primary indicator-item"></span>
+              </div>
+            </button>
+      
+            <!-- Profile Dropdown -->
+            <div class="dropdown dropdown-top">
+              <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                <div class="w-10 rounded-full">
+                  <img
+                    alt="Profile"
+                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                </div>
+              </div>
+              <ul
+                tabindex="0"
+                class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mb-2 w-52 shadow">
+                <li>
+                  <a class="justify-between">
+                    Profile
+                    <span class="badge">New</span>
+                  </a>
+                </li>
+                <li><a>Settings</a></li>
+                <li><a>Logout</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      
+        <!-- Main Content -->
+        <div class="flex-1 p-8 ml-64">
+          <h1 class="text-3xl font-bold mb-4">Welcome to the Main Content</h1>
+          <p>This is where your main content will be displayed. The left navbar is fixed and stays in place as you scroll.</p>
+        </div>
+      </div>
+
+      
     {% block content %}
 
     {% endblock %}
