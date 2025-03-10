@@ -3,14 +3,18 @@
 
 {% block content %}
 
-<h1>
-    Hello
+<h1 class="text-xl">
+    Welcome HOME {{request.user}} 
 </h1>
 
-{% for each in users %}
-<li>{{each.username}}</li>
-{% endfor %}
+{% if user.userprofile %}
 
-<a href="">Link to chat</a>
+<a href="{% url 'profile_edit' user.userprofile.id %}">Edit Profile</a>
+
+{% else %}
+
+<a href="{% url 'profile_create' %}">Create Profile</a>
+
+{% endif %}
 
 {% endblock %}

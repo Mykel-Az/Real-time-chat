@@ -1,0 +1,19 @@
+{% extends "account/signup.html" %}
+
+{% block content %}
+<div class="flex-1 p-8 ml-64">
+  <div class="max-w-md mx-auto bg-base-100 p-6 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold mb-6 text-center">Logout</h2>
+    <p class="text-center">
+      Are you sure you want to log out?
+    </p>
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary w-full mt-4">Log Out</button>
+    </form>
+    <div class="mt-4 text-center">
+      <p><a href="{% url 'account_login' %}" class="text-primary">Return to login</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

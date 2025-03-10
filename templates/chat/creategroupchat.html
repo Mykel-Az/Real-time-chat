@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen p-4 bg-base-200">
+    <div class="card w-full max-w-lg bg-base-100 shadow-xl p-6">
+        <h1 class="text-5xl font-bold text-center mb-8">New Group Chat</h1>
+
+        <form action="" method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Group Name Field -->
+            <div class="form-control">
+                <label for="{{ form.groupchat_name.id_for_label }}" class="label">
+                    <span class="label-text">{{ form.groupchat_name.label }}</span>
+                </label>
+                {{ form.groupchat_name }}
+                {% if form.groupchat_name.help_text %}
+                    <p class="text-sm text-gray-500 mt-2">{{ form.groupchat_name.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Members Field -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">{{ form.members.label }}</span>
+                </label>
+                <div class="dropdown dropdown-bottom w-full">
+                    <!-- Dropdown Trigger Button -->
+                    <div tabindex="0" role="button" class="btn btn-outline w-full justify-between">
+                        <span>Select Members</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+
+                    <!-- Dropdown Content (Scrollable List) -->
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto">
+                        {% for user in form.members.field.queryset %}
+                            {% if user != request.user %} <!-- Exclude the current user -->
+                                <li>
+                                    <label for="id_members_{{ forloop.counter0 }}" class="label cursor-pointer justify-start">
+                                        <input
+                                            type="checkbox"
+                                            name="members"
+                                            value="{{ user.id }}"
+                                            id="id_members_{{ forloop.counter0 }}"
+                                            class="checkbox checkbox-primary"
+                                        />
+                                        <span class="label-text ml-2">{{ user.username }}</span>
+                                    </label>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if form.members.help_text %}
+                    <p class="text-sm text-gray-500 mt-2">{{ form.members.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Private Group Field -->
+            <div class="form-control">
+                <label for="{{ form.is_private.id_for_label }}" class="label cursor-pointer justify-start">
+                    {{ form.is_private }}
+                    <span class="label-text ml-2">{{ form.is_private.label }}</span>
+                </label>
+                {% if form.is_private.help_text %}
+                    <p class="text-sm text-gray-500 mt-2">{{ form.is_private.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-full">
+                Create Group
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

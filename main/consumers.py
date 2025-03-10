@@ -1,93 +1,228 @@
 import json
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from asgiref.sync import sync_to_async
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from .models import GroupChatRoom, GroupMessage, PrivateChatRoom, PrivateMessages
 
-from .models import *
 
-
-class ChatConsumer(AsyncJsonWebsocketConsumer):
+class GroupChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.chatroom = get_object_or_404(GroupChatRoom, room_code=self.room_name)
+        self.room_code = self.scope['url_route']['kwargs']['room_code']
 
-        # join room group
+        # Use sync_to_async to call get_object_or_404
+        self.chatroom = await sync_to_async(get_object_or_404)(GroupChatRoom, room_code=self.room_code)
+
+        # Join room group
         await self.channel_layer.group_add(
-            self.chatroom,
+            self.room_code,
             self.channel_name
         )
 
         # Add user to users_online
-        if self.user not in self.chatroom.users_online.all():
-            self.chatroom.users_online.add(self.user)
-            self.update_online_count()
+        if self.user not in await sync_to_async(list)(self.chatroom.users_online.all()):
+            await sync_to_async(self.chatroom.users_online.add)(self.user)
+            await self.update_online_count()
+
+        # Update last_activity
+        await sync_to_async(self.chatroom.save)()
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        # leave room group
+        # Leave room group
         await self.channel_layer.group_discard(
-            self.chatroom,
+            self.room_code,
             self.channel_name
         )
 
-        # reomve user from online_user
-        if self.user in self.chatroom.users_online.all():
-            self.chatroom.users_online.remove(self.user)
-            self.update_online_count()
+        # Remove user from online_user
+        if self.user in await sync_to_async(list)(self.chatroom.users_online.all()):
+            await sync_to_async(self.chatroom.users_online.remove)(self.user)
+            await self.update_online_count()
+
+        # Update last_activity
+        await sync_to_async(self.chatroom.save)()
 
 
-        # receive message from websocket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        text = text_data_json['message']
+        text = text_data_json.get('message', '').strip()
+        message_type = text_data_json.get('message_type', 'text')  # Default to 'text'
+        mark_as_read = text_data_json.get('mark_as_read', False) # chek if message should be marked as read
 
-        message = GroupMessage.objects.create(content = text, sender = self.user, room=self.chatroom)
+        if text:  # Validate message
+            # Create a GroupMessage
+            message = await sync_to_async(GroupMessage.objects.create)(
+                content=text,
+                sender=self.user,
+                room=self.chatroom,
+                message_type=message_type  # Set the message type
+            )
 
-        # send message to room group
-        await self.channel_layer.group_send(
-            self.chatroom,
-            {
-                'type': 'chat_message',
-                'message': message
-            }
-        )
+            # Mark message as read
+            if mark_as_read:
+                await sync_to_async(message.mark_as_read)(self.user)
 
-         # Receive message from room group
+            # Update last_activity in the chatroom
+            await sync_to_async(self.chatroom.save)()
+
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_code,
+                {
+                    'type': 'chat_message',
+                    'message': message.content,
+                    'sender': self.user.username,
+                    'timestamp': message.timestamp.isoformat(),
+                    'message_type': message.message_type, # Include message type
+                    'is_read': mark_as_read # Include read status
+                }
+            )
+
     async def chat_message(self, event):
         message = event['message']
+        sender = event.get('sender', 'Anonymous')
 
-        text = GroupMessage.objects.get(id=message)
-        # context = {
-        #     'message': message,
-        #     'user': self.user,
-        # }
-        # html = render_to_string("partials/chat_message_p.html", context=context)
-        # self.send(text_data=html)
-        
+        message_obj = {
+        'content': message,
+        'sender': {'username': sender,
+                   'id': self.user.id if sender == self.user.username else None},
+        'timestamp': timezone.now()
+        }
+
+        html = await sync_to_async(render_to_string)(
+        'chat/partials/chat_message_p.html',
+        {'message': message_obj, 'request': {'user': self.user}, 'is_sender': sender == self.user}
+        )
+
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'message': text
+            'type': 'chat_message',
+            'html': html
         }))
 
     async def update_online_count(self):
-        online_count = self.chatroom.users_online.count()
+        online_count = await sync_to_async(self.chatroom.users_online.count)()
 
         event = {
             'type': 'online_count_handler',
             'online_count': online_count
         }
-        await self.channel_layer.group_send(self.room_name, event)
+        await self.channel_layer.group_send(self.room_code, event)
 
-    async  def online_count_handler(self, event):
+    async def online_count_handler(self, event):
         online_count = event['online_count']
-        context = {
-        'online_count': online_count,
-        'chat_group': self.chatroom
+        # context = {
+        #     'online_count': online_count,
+        #     'chat_group': self.chatroom
+        # }
+        # print(online_count)
+        # html = await sync_to_async(render_to_string)("chat/chat_room.html", context)
+
+        # Send the rendered HTML as a WebSocket message
+        await self.send(text_data=json.dumps({
+            'type': 'online_count',
+            'online_count': online_count
+        }))
+
+
+
+class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        self.room_code = self.scope['url_route']['kwargs']['room_code']
+
+        # Use sync_to_async to call get_object_or_404
+        self.chatroom = await sync_to_async(get_object_or_404)(PrivateChatRoom, room_code=self.room_code)
+
+        # Join room group
+        await self.channel_layer.group_add(
+            self.room_code,
+            self.channel_name
+        )
+
+        # Add user to users_online
+        if self.user not in await sync_to_async(list)(self.chatroom.user_online.all()):
+            await sync_to_async(self.chatroom.user_online.add)(self.user)
+            await self.update_online_count()
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.room_code,
+            self.channel_name
+        )
+
+        # Remove user from online_user
+        if self.user in await sync_to_async(list)(self.chatroom.user_online.all()):
+            await sync_to_async(self.chatroom.user_online.remove)(self.user)
+            await self.update_online_count()
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        text = text_data_json.get('message', '').strip()
+
+        if text:  # Validate message
+            # create a GroupMessage
+            message = await sync_to_async(PrivateMessages.objects.create)(
+                content=text,
+                sender=self.user,
+                room=self.chatroom
+            )
+
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_code,
+                {
+                    'type': 'chat_message',
+                    'message': message.content,
+                    'sender': self.user.username,  # Include sender info
+                    'timestamp': message.timestamp.isoformat()
+                }
+            )
+
+    async def chat_message(self, event):
+        message = event['message']
+        sender = event.get('sender', 'Anonymous')
+
+        message_obj = {
+        'content': message,
+        'sender': {'username': sender,
+                   'id': self.user.id if sender == self.user.username else None
+                   },
+        'timestamp': timezone.now()
         }
-        html = render_to_string("partials/online_count.html", context)
 
-     # Send the rendered HTML as a WebSocket message
-        await self.send(text_data=html)
+        html = await sync_to_async(render_to_string)(
+        'chat/partials/chat_message_p.html',
+        {'message': message_obj, 'request': {'user': self.user}, 'is_sender': sender == self.user.username}
+        )
 
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'chat_message',
+            'html': html
+        }))
+
+    async def update_online_count(self):
+        online_count = await sync_to_async(self.chatroom.user_online.count)()
+
+        event = {
+            'type': 'online_count_handler',
+            'online_count': online_count
+        }
+        await self.channel_layer.group_send(self.room_code, event)
+
+    async def online_count_handler(self, event):
+        online_count = event['online_count']
+
+        # Send the rendered HTML as a WebSocket message
+        await self.send(text_data=json.dumps({
+            'type': 'online_count',
+            'online_count': online_count
+        }))

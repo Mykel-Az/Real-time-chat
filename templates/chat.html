@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<h1 class="text-xl">
+    Welcome {{request.user}}
+</h1>
+<br>
+<h2 class="text-2xl">Users</h2>
+{% for user in users %}
+{% if user != request.user %}
+<li>
+    <a href="{% url 'privatechat' user.username %}">{{user}}</a>
+</li>
+{% endif %}
+{% endfor %}
+
+<br>
+<h2 class="text-2xl">Private Chats</h2>
+{% for chat in privatechats %}
+<li>
+    <a class="button" href="{% url 'directchat' chat.room_code %}">
+        {% for user in chat.members.all %}
+            {% if user != request.user %}
+            {{ user }}
+            {% endif %}
+        {% endfor %}
+    </a>
+</li>
+{% endfor %}
+
+<br>
+<br>
+
+<h2 class="text-2xl" >Public Group Chats</h2>
+{% for chat in groupchats %}
+<li><a href="{% url 'chatroom' chat.room_code %}">{{chat.groupchat_name}}</a></li>
+{% endfor %}
+
+{% endblock %}

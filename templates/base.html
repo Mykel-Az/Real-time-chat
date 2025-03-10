@@ -1,3 +1,5 @@
+{% load static %}
+{% load tailwind_filters %}
 {% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -19,10 +21,10 @@
           <!-- Navigation Links -->
           <div class="navbar-center w-full">
             <ul class="menu menu-vertical w-full p-2">
-              <li><a class="flex items-center gap-2">Homepage</a></li>
+              <li><a href="{% url 'home' %}" class="flex items-center gap-2">Homepage</a></li>
               <li><a class="flex items-center gap-2">Portfolio</a></li>
               <li><a class="flex items-center gap-2">About</a></li>
-              <li><a class="flex items-center gap-2" href="">Chats</a></li>
+              <li><a class="flex items-center gap-2" href="{% url 'chats' %}">Chats</a></li>
             </ul>
           </div>
       
@@ -48,41 +50,49 @@
             </button>
       
             <!-- Profile Dropdown -->
+             {%if user.is_authenticated%}
             <div class="dropdown dropdown-top">
               <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
                 <div class="w-10 rounded-full">
                   <img
                     alt="Profile"
-                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                    src="{{ user.userprofile.display_picture.url }}" />
                 </div>
               </div>
               <ul
                 tabindex="0"
                 class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mb-2 w-52 shadow">
                 <li>
-                  <a class="justify-between">
+                  <a href="{{ user.userprofile.get_absolute_url }}" class="justify-between">
                     Profile
                     <span class="badge">New</span>
                   </a>
                 </li>
                 <li><a>Settings</a></li>
-                <li><a>Logout</a></li>
+                <li><a href="{% url 'account_logout' %}">Logout</a></li>
               </ul>
             </div>
           </div>
         </div>
+        {% else %}
+        <div class="navbar-end w-full flex-col items-start p-4 mt-auto">
+          <ul class="menu menu-vertical w-full p-2">
+            <li><a href="{% url 'account_signup' %}">Sign Up</a></li>
+            <li><a href="{% url 'account_login' %}">Log In</a></li>
+          </ul>
+        </div>
+        {% endif %}
       
         <!-- Main Content -->
         <div class="flex-1 p-8 ml-64">
-          <h1 class="text-3xl font-bold mb-4">Welcome to the Main Content</h1>
-          <p>This is where your main content will be displayed. The left navbar is fixed and stays in place as you scroll.</p>
+            {% block content %}
+
+            {% endblock %}
         </div>
       </div>
 
       
-    {% block content %}
-
-    {% endblock %}
+    
 
 </body>
 

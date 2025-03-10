@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}familiar{% endblock %}
+
+
+{% block content %}
+
+{% if not users %}
+
+<h1>None yet!</h1>
+
+{% else %}
+
+{% for user in users %} 
+
+<hr>
+<div >
+    <!-- Profile Picture -->
+    <a href="{{ user.userprofile.get_absolute_url }}" >
+      <img
+        src="{{ user.userprofile.display_picture.url }}"
+        class="rounded-circle"
+        alt="{{ user.username }}'s profile picture"
+        width="40"
+        height="40"
+      />
+      
+    </a>
+
+    <!-- Username -->
+    <a href="{{ user.userprofile.get_absolute_url }}" >
+      <h6 >{{ user.username }}</h6>
+    </a>
+  </div>
+  <hr>
+  {% endfor %}
+  
+  {% endif %}
+
+{% endblock %}

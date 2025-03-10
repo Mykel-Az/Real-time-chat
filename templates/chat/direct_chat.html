@@ -41,7 +41,7 @@
 <!-- WebSocket Script -->
 <script>
     const roomCode = "{{ chat_group.room_code }}";  // Use chat_group.room_code
-    const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/groupchat/${roomCode}/`);
+    const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/directchat/${roomCode}/`);
 
     // Handle incoming messages
     chatSocket.onmessage = function (e) {
