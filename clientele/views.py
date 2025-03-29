@@ -14,7 +14,9 @@ from django.http import HttpResponseRedirect, Http404
 
 @login_required
 def home(request):
-    return render(request, 'home.html')
+    users = User.objects.all()
+    # profile = UserProfile.objects.all()
+    return render(request, 'home.html', { 'users': users})
 
 
 class SignUpView(generic.CreateView):
@@ -100,7 +102,7 @@ def user_profile(request, pk):
 def follow(request, pk):
     user_p = get_object_or_404(UserProfile, pk=request.user.userprofile.id)
     profile = get_object_or_404(UserProfile, pk=pk)
-    print(f'userp:{user_p}, pro:{profile}')
+    # print(f'userp:{user_p}, pro:{profile}')
     if request.method == 'POST':
         if profile.followers.filter(id = request.user.userprofile.id).exists():
             profile.followers.remove(request.user)

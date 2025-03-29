@@ -4,3 +4,6 @@ from django.apps import AppConfig
 class ClienteleConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'clientele'
+
+    def ready(self):
+        import clientele.signals

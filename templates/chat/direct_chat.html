@@ -2,15 +2,42 @@
 {% load static %}
 
 {% block content %}
-<div class="flex flex-col h-screen bg-gray-50">
+<div class="flex flex-col h-screen bg-gray-50 overflow-hidden">
     <!-- Chat Header -->
     <div class="bg-white border-b border-gray-200 p-4 shadow-sm">
-        <h1 class="text-2xl font-bold text-gray-800">{{ chat_group.groupchat_name }}</h1>
-        <p id="online-count" class="text-sm text-gray-600 mt-1">Online: {{online_count}} </p>
+        <!-- Back Button -->
+        <a href="" class="text-gray-600 hover:text-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+
+        <!-- User Info -->
+        <div class="flex items-center space-x-4">
+            <!-- User Display Picture -->
+            <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                {% if other_user.userprofile.display_picture %}
+                    <img src="{{ other_user.userprofile.display_picture.url }}" alt="Group Display Picture" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-500 text-sm">No Image</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <h1 class="text-xl font-bold text-gray-800">{{ other_user.username }}</h1>
+            <p id="online-count" class="text-sm text-gray-600 mt-1">
+                {% if online_count %}
+                    Online
+                {% else %}
+                    Offline
+                {% endif %}
+            </p>
+        </div>
     </div>
 
     <!-- Chat Messages -->
-    <div id="chat-log" class="flex-1 overflow-y-auto p-6 space-y-4">
+    <div id="chat-log" class="flex-1 overflow-y-auto p-6 space-y-4 w-full max-w-full">
         {% for message in chat_messages %}
             {% include 'chat/partials/chat_message_p.html' %}
         {% endfor %}
@@ -60,7 +87,6 @@
         } else if (data.type == 'online_count'){
             const onlineCountElement = document.querySelector('#online-count');
             onlineCountElement.textContent = `Online: ${data.online_count}`;
-            
         }
     };
 

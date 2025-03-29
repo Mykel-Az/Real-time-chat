@@ -1,38 +1,67 @@
+{% load static %}
 {% if is_sender or message.sender == request.user %}
 
-<div class="chat chat-end">
+<div class="chat chat-end" data-message-id="{{ message.id }}">    
     <div class="chat-image avatar">
         <div class="w-10 rounded-full">
             <img
                 alt="user's dp"
-                src="{{ is_sender.userprofile.display_pictures.url }}"
+                src="{{ message.sender.userprofile.display_picture.url }}"
                 class="rounded-full"
             />
         </div>
     </div>
 
-    <div class="chat-bubble bg-blue-500 text-white max-w-md">
+    <div class="chat-bubble bg-blue-500 text-white max-w-md whitespace-normal break-words">
+        {{message.id}}
         {{ message.content }}
         <div class="text-xs opacity-50 mt-1">
             {{ message.timestamp|date:"H:i" }}
+            <span>delivered</span>
+            {% if message.is_seen %}  <!-- Display "seen" indicator -->
+                <span class="read-status">✓ Seen by {{ message.read_by.all|join:", " }}</span>
+            {% endif %}
         </div>
+
+        <div class="relative">
+            <span class="cursor-pointer" onclick="toggleDropdown('seen-by-{{ message.id }}')">
+                {% if message.is_seen %}✓{% endif %}
+            </span>
+            <div id="seen-by-{{ message.id }}" class="hidden absolute bg-white border border-gray-200 p-2 rounded shadow-lg">
+                <p class="font-semibold">Seen by:</p>
+                <ul>
+                    {% for user in message.read_by.all %}
+                        <li>{{ user.username }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="dropdown dropdown-top dropdown-end">
+        <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+            <li><a id="">Reply</a></li>
+            <li><a id="">Seen by</a></li>
+            <li><a id="">Delete for you</a></li>
+            <li><a id="">Copy</a></li>
+            <li><a id="">star</a></li>
+        </ul>
     </div>
 </div>
 
 {% else %}
 
-<div class="chat chat-start">
+<div class="chat chat-start" data-message-id="{{ message.id }}">
     <div class="chat-image avatar">
         <div class="w-10 rounded-full">
             <img
                 alt="user dp"
-                src="{{ is_sender.userprofile.display_pictures.url }}"
+                src="{{ message.sender.userprofile.display_picture.url }}"
                 class="rounded-full"
             />
         </div>
     </div>
 
-    <div class="chat-bubble bg-gray-200 text-black max-w-md">
+    <div class="chat-bubble bg-gray-200 text-black max-w-md whitespace-normal break-words">
         <div class="text-xs text-cyan-500 font-semibold">
             {{ message.sender.username }}
         </div>
@@ -40,6 +69,20 @@
         <div class="text-xs opacity-50 mt-1">
             {{ message.timestamp|date:"H:i" }}
         </div>
+
+        <div class="mt-1 text-xs text-gray-500">
+            {% if message.read_by.all %}
+                <span class="read-status">Seen by {{ message.read_by.all|join:", " }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="dropdown dropdown-top dropdown-end">
+        <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+            <li><a id="">Reply</a></li>
+            <li><a id="">Delete for you</a></li>
+            <li><a id="">Copy</a></li>
+            <li><a id="">star</a></li>
+        </ul>
     </div>
 </div>
 

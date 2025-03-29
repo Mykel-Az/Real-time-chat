@@ -2,24 +2,107 @@
 {% load static %}
 
 {% block content %}
-<div class="flex flex-col h-screen bg-gray-50">
+<div class="flex flex-col h-screen bg-gray-50 overflow-hidden">
     <!-- Chat Header -->
-    <div class="bg-white border-b border-gray-200 p-4 shadow-sm">
-        <h1 class="text-2xl font-bold text-gray-800">{{ chat_group.groupchat_name }}</h1>
-        <p id="online-count" class="text-sm text-gray-600 mt-1">Online: {{online_count}} </p>
+    <div class="bg-white border-b border-gray-200 p-4 shadow-sm flex items-center justify-between">
+        <!-- Back Button -->
+        <a href="" class="text-gray-600 hover:text-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+
+        <!-- Group Info -->
+        <div class="flex items-center space-x-4">
+            <!-- Group Display Picture -->
+            <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                {% if chat_group.display_picture %}
+                    <img src="{{ chat_group.display_picture.url }}" alt="Group Display Picture" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-500 text-sm">No Image</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Group Name and Online Count -->
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">{{ chat_group.groupchat_name }}</h1>
+                <p id="online-count" class="text-sm text-gray-600">Online: {{ online_count }}</p>
+            </div>
+        </div>
+
+        <!-- Empty Space for Alignment -->
+        <div class="w-6"></div>
     </div>
 
     <!-- Chat Messages -->
-    <div id="chat-log" class="flex-1 overflow-y-auto p-6 space-y-4">
+    <div id="chat-log" class="flex-1 overflow-y-auto p-6 space-y-4 w-full max-w-full">
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="flex justify-center py-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+
         {% for message in chat_messages %}
             {% include 'chat/partials/chat_message_p.html' %}
         {% endfor %}
+
+        <!-- Scroll to Bottom Button -->
+        <button id="scroll-to-bottom" class="fixed bottom-20 right-6 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+            </svg>
+        </button>
     </div>
 
     <!-- Chat Input -->
     <div class="bg-white border-t border-gray-200 p-4 shadow-sm">
         <form id="chat-form" class="flex items-center space-x-2">
             {% csrf_token %}
+            
+            <!-- Emoji Button -->
+            <button
+                type="button"
+                id="emoji-button"
+                class="p-2 text-gray-500 hover:text-blue-500 focus:outline-none"
+                title="Add Emoji"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+
+            <!-- Voice Record Button -->
+            <button
+                type="button"
+                id="voice-record-button"
+                class="p-2 text-gray-500 hover:text-blue-500 focus:outline-none"
+                title="Record Voice"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0-4H3m15 0h3m-3-7a7 7 0 00-7-7m0 0a7 7 0 00-7 7m7-7v4m0-4h14m-14 0H3" />
+                </svg>
+            </button>
+
+            <!-- Media Button with Dropdown -->
+            <div class="dropdown dropdown-top">
+                <button
+                    type="button"
+                    id="media-button"
+                    class="p-2 text-gray-500 hover:text-blue-500 focus:outline-none"
+                    title="Attach Media"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </button>
+                <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a id="upload-document">Document</a></li>
+                    <li><a id="upload-image">Picture/Video</a></li>
+                </ul>
+            </div>
+
+            <!-- Message Input -->
             <input
                 type="text"
                 id="chat-message-input"
@@ -27,6 +110,8 @@
                 placeholder="Type a message..."
                 autofocus
             />
+
+            <!-- Send Button -->
             <button
                 type="submit"
                 id="chat-message-submit"
@@ -43,6 +128,15 @@
     const roomCode = "{{ chat_group.room_code }}";  // Use chat_group.room_code
     const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/groupchat/${roomCode}/`);
 
+    // Function to scroll to the bottom of the chat log
+    function scrollToBottom() {
+        const chatLog = document.getElementById('chat-log');
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    // Scroll to the bottom when the page loads
+    window.addEventListener('load', scrollToBottom);
+
     // Handle incoming messages
     chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
@@ -53,14 +147,28 @@
             // Create a container for the new message
             const messageElement = document.createElement('div');
             messageElement.innerHTML = data.html;
+
+            // Append the new message to the chat log
             chatLog.appendChild(messageElement);
 
             // Scroll to the bottom of the chat log
-            chatLog.scrollTop = chatLog.scrollHeight;
-        } else if (data.type == 'online_count'){
+            scrollToBottom();
+
+            // Observe the new message for visibility
+            observer.observe(messageElement);
+        } else if (data.type === 'online_count') {
             const onlineCountElement = document.querySelector('#online-count');
             onlineCountElement.textContent = `Online: ${data.online_count}`;
-            
+        } else if (data.type === 'message_read') {
+            // Update the read status in the UI
+            const messageElement = document.querySelector(`[data-message-id="${data.message_id}"]`);
+            console.log(`Message ${data.message_id} UI to be updated`);
+            if (messageElement) {
+                const readStatus = messageElement.querySelector('.read-status');
+                if (readStatus) {
+                    readStatus.textContent = `Seen by ${data.read_by}`;
+                }
+            }
         }
     };
 
@@ -82,5 +190,49 @@
     chatSocket.onclose = function (e) {
         console.error('Chat socket closed unexpectedly');
     };
+
+    // Function to mark a message as read
+    function markMessageAsRead(messageId) {
+        chatSocket.send(JSON.stringify({
+            'type': 'mark_as_read',
+            'message_id': messageId
+        }));
+        console.log(`Marked message ${messageId} as read`);
+    }
+
+    // IntersectionObserver to detect when a message becomes visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const messageId = entry.target.dataset.messageId;
+                console.log(`Message ${messageId} is visible`);
+                if (messageId) {
+                    markMessageAsRead(messageId);
+                }
+            }
+        });
+    }, {
+        threshold: 0.5  // Trigger when 50% of the message is visible
+    });
+
+    // Observe all existing messages
+    document.querySelectorAll('.chat.chat-end, .chat.chat-start').forEach(message => {
+        observer.observe(message);
+    });
+
+    // Scroll to Bottom Button
+    const scrollToBottomButton = document.getElementById('scroll-to-bottom');
+    const chatLog = document.getElementById('chat-log');
+
+    scrollToBottomButton.addEventListener('click', scrollToBottom);
+
+    // Hide the button when at the bottom
+    chatLog.addEventListener('scroll', () => {
+        if (chatLog.scrollTop + chatLog.clientHeight >= chatLog.scrollHeight - 50) {
+            scrollToBottomButton.classList.add('hidden');
+        } else {
+            scrollToBottomButton.classList.remove('hidden');
+        }
+    });
 </script>
 {% endblock %}

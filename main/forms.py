@@ -7,7 +7,9 @@ class ChatMessageCreateForm(ModelForm):
 
     class Meta:
         model = GroupMessage
-        fields = ['content']
+        fields = ['content', 
+                #   'documents', 'images', 'audios'
+                  ]
         widgets ={
             'content': forms.TextInput(attrs={
                 'id': 'chat-message-input',

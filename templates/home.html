@@ -1,20 +1,139 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
 
-<h1 class="text-xl">
-    Welcome HOME {{request.user}} 
-</h1>
+<div class="container mx-auto px-4 py-8">
+    <!-- Welcome Message -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold mb-4">
+            Welcome Home, {{ request.user.username }}!
+        </h1>
+        <p class="text-gray-600">
+            Connect with others, share your story, and explore the community.
+        </p>
+    </div>
 
-{% if user.userprofile %}
+    <!-- Profile Edit/Create Link -->
+    <div class="text-center mb-8">
+        {% if user.userprofile %}
+            <a href="{% url 'profile_edit' user.userprofile.id %}" class="btn btn-primary inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+                Edit Profile
+            </a>
+        {% else %}
+            <a href="{% url 'profile_create' %}" class="btn btn-primary inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+                Create Profile
+            </a>
+        {% endif %}
+    </div>
 
-<a href="{% url 'profile_edit' user.userprofile.id %}">Edit Profile</a>
+    <!-- Search Bar -->
+    <div class="mb-8">
+        <input type="text" placeholder="Search users..." class="input input-bordered w-full max-w-md" id="search-users" />
+    </div>
 
-{% else %}
+    <!-- User List -->
+    <div class="space-y-4" id="user-list">
+        {% for user in users %}
+            {% if user != request.user %}
+            <a href="{% url 'user_profile' user.userprofile.pk %}">
+                <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="card-body">
+                        <div class="flex items-center space-x-4">
+                            <!-- User Avatar -->
+                            <div class="avatar">
+                                <div class="w-12 h-12 rounded-full">
+                                    <img src="{{ user.userprofile.display_picture.url }}" alt="{{ user.username }}" class="rounded-full" />
+                                </div>
+                            </div>
 
-<a href="{% url 'profile_create' %}">Create Profile</a>
+                            <!-- User Info -->
+                            <div class="flex-1">
+                                <h2 class="text-xl font-semibold">{{ user.username }}</h2>
+                                <p class="text-sm text-gray-500">{{ user.userprofile.bio }}</p>
+                            </div>
 
-{% endif %}
+                            <!-- Follow/Unfollow and Message Buttons -->
+                            <div class="flex space-x-2">
+                                <a href="{% url 'privatechat' user.username %}" class="btn btn-sm btn-primary">
+                                    Message
+                                </a>
+                                {% if request.user in user.userprofile.followers.all %}
+                                    <a href="{% url 'follow' user.userprofile.id %}" class="btn btn-sm btn-secondary">
+                                        Unfollow
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'follow' user.userprofile.id %}" class="btn btn-sm btn-primary">
+                                        Follow
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- No Users Found -->
+    <div id="no-users" class="hidden text-center text-gray-500">
+        <p>No users found. Try a different search term.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-8">
+        <div class="btn-group">
+            {% if users.has_previous %}
+                <a href="?page=1" class="btn">First</a>
+                <a href="?page={{ users.previous_page_number }}" class="btn">Previous</a>
+            {% endif %}
+
+            <span class="btn btn-active">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+
+            {% if users.has_next %}
+                <a href="?page={{ users.next_page_number }}" class="btn">Next</a>
+                <a href="?page={{ users.paginator.num_pages }}" class="btn">Last</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Back to Top Button -->
+<button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="btn btn-circle fixed bottom-4 right-4">
+    ↑
+</button>
+
+<!-- Search Functionality -->
+<script>
+    document.getElementById('search-users').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        const userCards = document.querySelectorAll('#user-list .card');
+        let visibleCards = 0;
+
+        userCards.forEach(card => {
+            const username = card.querySelector('h2').textContent.toLowerCase();
+            if (username.includes(searchTerm)) {
+                card.style.display = 'block';
+                visibleCards++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide "No Users Found" message
+        const noUsersMessage = document.getElementById('no-users');
+        if (visibleCards === 0) {
+            noUsersMessage.style.display = 'block';
+        } else {
+            noUsersMessage.style.display = 'none';
+        }
+    });
+</script>
 
 {% endblock %}
